@@ -28,5 +28,4 @@ To run this project, you need:
 Clone the code from GitHub:
 
 ```bash
-git clone https://github.com/yourusername/BeetleMovies.API.git
-cd BeetleMovies.API
+git clone https://github.com/Ctato1/AspNet-creating-minimal-API.git
