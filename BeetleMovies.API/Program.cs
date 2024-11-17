@@ -24,14 +24,9 @@ namespace BeetleMovies.API
 
             app.MapGet("/", () => "Hello World!");
 
-            app.MapGet("/movies/{number:int}", async Task<Results<NoContent, Ok<List<Movie>>>> (MovieContext context, int? number) =>
+            app.MapGet("/movies/{number:int}", async (MovieContext context,IMapper mapper, int? number) =>
             {
-                var movieEntity = await context.Movies.Where(x => x.Id == number).ToListAsync();
-                if (movieEntity == null || movieEntity.Count <= 0)
-                {
-                    return TypedResults.NoContent();
-                }
-                return TypedResults.Ok(movieEntity);
+                return  mapper.Map<MovieDTO>(await context.Movies.FirstOrDefaultAsync(x => x.Id == number));
             });
 
             app.MapGet("/movies/{movieId:int}/directors", async (
@@ -47,19 +42,20 @@ namespace BeetleMovies.API
 
 
             //with header (changed name)
-            app.MapGet("/movies", async Task<Results<NoContent,Ok<List<Movie>>>> (MovieContext context,
+            app.MapGet("/movies", async Task<Results<NoContent,Ok<IEnumerable<MovieDTO>>>> (MovieContext context,
+                IMapper mapper,
                 [FromHeader(Name = "X-MOVIE-TITLE")] string? title)
                 => {
                 var movieEntity = await context.Movies.Where(x => title == null || x.Title.ToLower().Contains(title.ToLower())).ToListAsync();
-
-                    if (movieEntity.Count <= 0 || movieEntity == null)
-                    {
-                        return TypedResults.NoContent();
-                    }
-                    else
-                    {
-                        return TypedResults.Ok(movieEntity);
-                    }
+                    
+                if (movieEntity.Count <= 0 || movieEntity == null)
+                {
+                   return TypedResults.NoContent();
+                }
+                else
+                {
+                   return TypedResults.Ok(mapper.Map<IEnumerable<MovieDTO>>(movieEntity));
+                }
             });
 
             //with header
