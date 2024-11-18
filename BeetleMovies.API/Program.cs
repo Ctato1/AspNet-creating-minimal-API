@@ -1,4 +1,4 @@
-using AutoMapper;
+﻿using AutoMapper;
 using BeetleMovies.API.DTOs;
 using BeetleMovies.API.Entities;
 using Microsoft.AspNetCore.Http.HttpResults;
@@ -22,27 +22,29 @@ namespace BeetleMovies.API
 
             var app = builder.Build();
 
-            app.MapGet("/", () => "Hello World!");
+            var moviesGroup = app.MapGroup("/movies");
+            var moviesGroupWithId = moviesGroup.MapGroup("/{moviesId:int}");
+            var moviesGroupWithDirectors = moviesGroupWithId.MapGroup("/directors");
 
-            app.MapGet("/movies/{number:int}", async (MovieContext context,IMapper mapper, int? number) =>
+            moviesGroupWithId.MapGet("", async (MovieContext context,IMapper mapper, int? moviesId) =>
             {
-                return  mapper.Map<MovieDTO>(await context.Movies.FirstOrDefaultAsync(x => x.Id == number));
-            });
+                return  mapper.Map<MovieDTO>(await context.Movies.FirstOrDefaultAsync(x => x.Id == moviesId));
+            }).WithName("GetMovies");
 
-            app.MapGet("/movies/{movieId:int}/directors", async (
+            moviesGroupWithDirectors.MapGet("", async (
                 MovieContext context,
                 IMapper mapper,
-                int movieId)
+                int? moviesId)
                 =>
             {
                 return mapper.Map<IEnumerable<DirectorDTO>>((await context.Movies
                     .Include(movie => movie.Directors)
-                    .FirstOrDefaultAsync(movie => movie.Id == movieId))?.Directors);
+                    .FirstOrDefaultAsync(movie => movie.Id == moviesId))?.Directors);
             });
 
 
             //with header (changed name)
-            app.MapGet("/movies", async Task<Results<NoContent,Ok<IEnumerable<MovieDTO>>>> (MovieContext context,
+            moviesGroup.MapGet("", async Task<Results<NoContent,Ok<IEnumerable<MovieDTO>>>> (MovieContext context,
                 IMapper mapper,
                 [FromHeader(Name = "X-MOVIE-TITLE")] string? title)
                 => {
@@ -57,6 +59,58 @@ namespace BeetleMovies.API
                    return TypedResults.Ok(mapper.Map<IEnumerable<MovieDTO>>(movieEntity));
                 }
             });
+
+            moviesGroup.MapPost("", async (
+                MovieContext context,
+                IMapper mapper,
+                [FromBody] MovieForCreatingDTO movieForCreatingDTO
+                ) =>
+                {
+                    var movie = mapper.Map<Movie>(movieForCreatingDTO);
+                    context.Add(movie);
+
+                    await context.SaveChangesAsync();
+
+                    var movieToReturn = mapper.Map<MovieDTO>(movie);
+
+                    return TypedResults.CreatedAtRoute(movieToReturn, "GetMovies", new { moviesId = movieToReturn.Id });
+                }
+
+            );
+
+            moviesGroupWithId.MapPut("", async Task<Results<NotFound, Ok>> (
+                 MovieContext context,
+                 IMapper mapper,
+                 int? moviesId,
+                 [FromBody] MovieForUpdatingDTO movieForUpdatingDTO
+                 ) =>{
+
+                     var movie = await context.Movies.FirstOrDefaultAsync(x => x.Id == moviesId);
+                     if ( movie == null )
+                         return TypedResults.NotFound();
+
+                     mapper.Map(movieForUpdatingDTO, movie);
+
+                     await context.SaveChangesAsync();
+
+                     return TypedResults.Ok();
+            });
+
+            moviesGroupWithId.MapDelete("", async Task<Results<NotFound, NoContent>> (
+                MovieContext context,
+                int? moviesId
+                ) => {
+
+                    var movie = await context.Movies.FirstOrDefaultAsync(x => x.Id == moviesId);
+                    if (movie == null)
+                        return TypedResults.NotFound();
+
+                    context.Movies.Remove(movie);
+
+                    await context.SaveChangesAsync();
+
+                    return TypedResults.NoContent();
+                });
 
             //with header
             /* app.MapGet("/movie", (MovieContext context, [FromHeader]string title) => {
