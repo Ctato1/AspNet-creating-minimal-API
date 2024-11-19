@@ -1,12 +1,6 @@
-﻿using AutoMapper;
-using BeetleMovies.API.DTOs;
-using BeetleMovies.API.EndpointHandler;
-using BeetleMovies.API.Entities;
-using Microsoft.AspNetCore.Http.HttpResults;
-using Microsoft.AspNetCore.Mvc;
+﻿using BeetleMovies.API.Extensions;
 using Microsoft.EntityFrameworkCore;
 using Tester1.DBContexts;
-using static System.Runtime.InteropServices.JavaScript.JSType;
 
 namespace BeetleMovies.API
 {
@@ -22,6 +16,9 @@ namespace BeetleMovies.API
             builder.Services.AddAutoMapper(AppDomain.CurrentDomain.GetAssemblies());
 
             var app = builder.Build();
+
+            app.RegisterMoviesEndpoints();
+            app.RegisterDirectorsEndpoints();
 
             app.Run();
         }

@@ -1,7 +1,5 @@
 ﻿using BeetleMovies.API.Entities;
 using Microsoft.EntityFrameworkCore;
-using System.Collections.Generic;
-using System.Reflection.Emit;
 
 namespace Tester1.DBContexts
 {
