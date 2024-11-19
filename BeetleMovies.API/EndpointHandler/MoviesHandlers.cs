@@ -14,16 +14,19 @@ namespace BeetleMovies.API.EndpointHandler
         public static async Task<Results<NoContent, Ok<IEnumerable<MovieDTO>>>> GetMoviesAsync(
                 MovieContext context,
                 IMapper mapper,
+                ILogger<MovieDTO> logger,
                 [FromHeader(Name = "X-MOVIE-TITLE")] string? title)
         {
             var movieEntity = await context.Movies.Where(x => title == null || x.Title.ToLower().Contains(title.ToLower())).ToListAsync();
 
             if (movieEntity.Count <= 0 || movieEntity == null)
             {
+                logger.LogInformation($"Movie not found. Param {title}");
                 return TypedResults.NoContent();
             }
             else
             {
+                logger.LogInformation($"Movie found. Return {movieEntity[0]?.Title}");
                 return TypedResults.Ok(mapper.Map<IEnumerable<MovieDTO>>(movieEntity));
             }
 

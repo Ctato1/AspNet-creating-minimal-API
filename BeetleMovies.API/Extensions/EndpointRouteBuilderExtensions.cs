@@ -40,6 +40,10 @@ namespace BeetleMovies.API.Extensions
 
             var moviesGroupWithDirectors = endpointRouteBuilder.MapGroup("/movies/{moviesId:int}/directors");
             moviesGroupWithDirectors.MapGet("", DirectorsHandlers.GetDirectorsAsync);
+            moviesGroupWithDirectors.MapPost("", () =>
+            {
+                throw new NotImplementedException();
+            });
         }
 
     }
