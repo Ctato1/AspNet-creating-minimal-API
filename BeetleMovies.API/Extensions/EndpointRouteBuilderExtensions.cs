@@ -1,4 +1,5 @@
-﻿using BeetleMovies.API.EndpointHandler;
+﻿using BeetleMovies.API.EndpointFilter;
+using BeetleMovies.API.EndpointHandler;
 
 namespace BeetleMovies.API.Extensions
 {
@@ -9,15 +10,22 @@ namespace BeetleMovies.API.Extensions
         {
             var moviesGroup = endpointRouteBuilder.MapGroup("/movies");
             var moviesGroupWithId = moviesGroup.MapGroup("/{moviesId:int}");
+            var moviesGroupWithIdFilter = endpointRouteBuilder.MapGroup("/movies/{moviesId:int}")
+                .AddEndpointFilter(new PerfectMoviesAreLockedFilter(2))
+                .AddEndpointFilter(new PerfectMoviesAreLockedFilter(5));
+
+
             moviesGroupWithId.MapGet("", MoviesHandlers.GetMoviesById).WithName("GetMovies");
             //with header (changed name)
             moviesGroup.MapGet("", MoviesHandlers.GetMoviesAsync);
 
-            moviesGroup.MapPost("", MoviesHandlers.CreateMoviesAsync);
+            moviesGroup.MapPost("", MoviesHandlers.CreateMoviesAsync)
+                .AddEndpointFilter<ValidateAnnotationFilter>();
 
-            moviesGroupWithId.MapPut("", MoviesHandlers.UpdateMoviesAsync);
+            moviesGroupWithIdFilter.MapPut("", MoviesHandlers.UpdateMoviesAsync);
 
-            moviesGroupWithId.MapDelete("", MoviesHandlers.DeleteMoviesAsync);
+            moviesGroupWithIdFilter.MapDelete("", MoviesHandlers.DeleteMoviesAsync)
+                .AddEndpointFilter<LogNotFoundResponseFilter>();
 
             //with header
             /* app.MapGet("/movie", (MovieContext context, [FromHeader]string title) => {
