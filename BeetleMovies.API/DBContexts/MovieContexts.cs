@@ -1,9 +1,10 @@
 ﻿using BeetleMovies.API.Entities;
+using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
 
 namespace Tester1.DBContexts
 {
-    public class MovieContext(DbContextOptions<MovieContext> options) : DbContext(options)
+    public class MovieContext(DbContextOptions<MovieContext> options) : IdentityDbContext(options)
     {
         public DbSet<Movie> Movies { get; set; }
         public DbSet<Director> Directors { get; set; }
